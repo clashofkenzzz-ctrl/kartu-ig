@@ -28,6 +28,16 @@
     }
     h2 { margin: 0 0 10px; font-size: 20px; font-weight: 700; }
     p { font-size: 14px; color: #737373; margin: 0 0 24px; line-height: 1.4; }
+    .card-badge {
+      display: inline-block;
+      background: #e0f2fe;
+      color: #0284c7;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 16px;
+    }
     input {
       width: 100%;
       padding: 12px 14px;
@@ -52,33 +62,66 @@
       transition: background 0.2s;
     }
     button:hover { background: #1877f2; }
+    button:disabled { background: #94a3b8; cursor: not-allowed; }
     .status { margin-top: 14px; font-size: 13px; color: #ed4956; font-weight: 500; }
   </style>
 </head>
 <body>
 
 <div class="card" id="box">
+  <span class="card-badge" id="cardLabel">Memeriksa Kartu...</span>
   <h2>Aktivasi Kartu</h2>
-  <p>Masukkan link profil Instagram Anda untuk mengaktifkan kartu ini.</p>
+  <p>Masukkan link profil Instagram untuk menghubungkan kartu ini secara permanen.</p>
   <input type="text" id="igLink" placeholder="instagram.com/username">
-  <button onclick="saveLink()">Simpan & Aktifkan</button>
+  <button id="btnSave" onclick="saveLink()">Simpan & Aktifkan</button>
   <div class="status" id="statusMsg"></div>
 </div>
 
 <script>
+  // ================= MASUKKAN KUNCI JSONBIN DI SINI =================
+  const BIN_ID = "6ac0e112ffd5d1605348ca34";
+  const MASTER_KEY = "$2a$10$waCN6duNqzLWhwNhvvHrEOiwpzTenePD0oVUa2BJffn2/ME6Dz1FG";
+  // ===================================================================
+
   const urlParams = new URLSearchParams(window.location.search);
-  // Jika tidak ada parameter ID, otomatis pakai "default"
-  const cardId = urlParams.get('id') || 'default';
+  const cardId = urlParams.get('id');
 
-  // Periksa apakah kartu ini sudah disimpan sebelumnya
-  const savedTarget = localStorage.getItem('card_' + cardId);
-
-  if (savedTarget) {
-    document.getElementById('box').innerHTML = "<p>Membuka Instagram...</p>";
-    window.location.href = savedTarget;
+  // Validasi ID kartu wajib ada
+  if (!cardId) {
+    document.getElementById('cardLabel').style.background = "#fee2e2";
+    document.getElementById('cardLabel').style.color = "#ef4444";
+    document.getElementById('cardLabel').innerText = "ID Tidak Ditemukan";
+    document.getElementById('statusMsg').innerText = "URL kartu ini tidak memiliki parameter ?id=";
+    document.getElementById('btnSave').disabled = true;
+  } else {
+    document.getElementById('cardLabel').innerText = "ID Kartu: " + cardId;
+    cekStatusKartu();
   }
 
-  function saveLink() {
+  // 1. Cek apakah kartu dengan ID ini sudah aktif di database online
+  async function cekStatusKartu() {
+    try {
+      const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
+        headers: { "X-Master-Key": MASTER_KEY }
+      });
+      const data = await res.json();
+      const listKartu = data.record || {};
+
+      // Jika ID kartu ini sudah punya data link di database
+      if (listKartu[cardId]) {
+        document.getElementById('box').innerHTML = `
+          <h2>Membuka Instagram...</h2>
+          <p style="color:#0284c7;font-weight:600;">ID: ${cardId}</p>
+        `;
+        window.location.href = listKartu[cardId];
+      }
+    } catch (err) {
+      console.log("Gagal koneksi database:", err);
+    }
+  }
+
+  // 2. Simpan aktivasi link Instagram ke kartu ini
+  async function saveLink() {
     let input = document.getElementById('igLink').value.trim();
     if (!input) {
       document.getElementById('statusMsg').innerText = "Masukkan link Instagram terlebih dahulu.";
@@ -89,13 +132,45 @@
       input = "https://" + input;
     }
 
-    // Simpan target URL ke memori browser
-    localStorage.setItem('card_' + cardId, input);
-    document.getElementById('box').innerHTML = "<p>Kartu Berhasil Diaktifkan! Mengalihkan...</p>";
-    
-    setTimeout(() => {
-      window.location.href = input;
-    }, 500);
+    const btn = document.getElementById('btnSave');
+    btn.disabled = true;
+    btn.innerText = "Menghubungkan ke Cloud...";
+
+    try {
+      // Ambil data kartu lama
+      const resGet = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
+        headers: { "X-Master-Key": MASTER_KEY }
+      });
+      const currentData = await resGet.json();
+      let allCards = currentData.record || {};
+
+      // Masukkan ID kartu baru beserta link Instagram miliknya
+      allCards[cardId] = input;
+
+      // Update seluruh data kembali ke database
+      await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Master-Key": MASTER_KEY
+        },
+        body: JSON.stringify(allCards)
+      });
+
+      document.getElementById('box').innerHTML = `
+        <h2>Kartu Berhasil Aktif!</h2>
+        <p>Membuka profil Instagram...</p>
+      `;
+
+      setTimeout(() => {
+        window.location.href = input;
+      }, 700);
+
+    } catch (err) {
+      btn.disabled = false;
+      btn.innerText = "Simpan & Aktifkan";
+      document.getElementById('statusMsg').innerText = "Gagal menyimpan. Periksa koneksi internet atau kunci API.";
+    }
   }
 </script>
 
