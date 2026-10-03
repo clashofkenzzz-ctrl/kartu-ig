@@ -3,9 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Instagram Card Generator</title>
-  <!-- Library QR Code -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <title>Smart Instagram Card - Dot-Pattern</title>
+  
+  <!-- Library QR Code Custom (Dot Pattern) -->
+  <script src="https://unpkg.com/qr-code-styling@1.5.0/lib/qr-code-styling.js"></script>
+  
   <style>
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -31,7 +33,7 @@
     h2 { margin: 0 0 8px; font-size: 20px; text-align: center; }
     p.desc { font-size: 13px; color: #94a3b8; margin: 0 0 20px; text-align: center; }
     label { font-size: 13px; font-weight: 600; color: #cbd5e1; display: block; margin-bottom: 6px; }
-    input[type="text"], input[type="file"] {
+    input[type="text"] {
       width: 100%;
       padding: 12px;
       border: 1px solid #334155;
@@ -42,10 +44,6 @@
       box-sizing: border-box;
       margin-bottom: 16px;
       outline: none;
-    }
-    input[type="file"] {
-      padding: 9px;
-      cursor: pointer;
     }
     input:focus { border-color: #38bdf8; }
     button {
@@ -79,53 +77,37 @@
       border-radius: 16px;
       box-shadow: 0 12px 30px rgba(0,0,0,0.4);
     }
-    #tempQr { display: none; }
+    /* Tempat penampung QR (disembunyikan) */
+    #qrContainer { display: none; }
   </style>
 </head>
 <body>
 
   <div class="panel">
-    <h2>Instagram Card Maker</h2>
-    <p class="desc">Buat kartu Instagram dengan QR otomatis siap cetak.</p>
+    <h2>Smart Instagram Card</h2>
+    <p class="desc">Buat kartu Instagram dengan QR titik-titik (dot-pattern) siap cetak.</p>
 
-    <label>1. Pilih Desain Kartu (Gambar Template Anda):</label>
-    <input type="file" id="bgInput" accept="image/*">
-
-    <label>2. Masukkan Link Profil Instagram:</label>
+    <label>Masukkan Link Profil Instagram:</label>
     <input type="text" id="igInput" placeholder="https://www.instagram.com/username">
 
     <button onclick="generateCard()">Generate Kartu</button>
-    <button id="downloadBtn" class="btn-download" onclick="downloadImage()">Download Hasil Desain (Siap Cetak)</button>
+    <button id="downloadBtn" class="btn-download" onclick="downloadImage()">Download Gambar Siap Cetak</button>
   </div>
 
   <div id="previewContainer">
     <canvas id="cardCanvas"></canvas>
   </div>
 
-  <div id="tempQr"></div>
+  <!-- Container sementara untuk render QR -->
+  <div id="qrContainer"></div>
 
   <script>
-    let uploadedImage = null;
+    const bgImage = new Image();
+    bgImage.src = 'template.jpg'; // Mengambil gambar template yang sudah diupload
 
-    // Baca file gambar yang dipilih user
-    document.getElementById('bgInput').addEventListener('change', function(e) {
-      const file = e.target.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = function(event) {
-          uploadedImage = new Image();
-          uploadedImage.src = event.target.result;
-        };
-        reader.readAsDataURL(file);
-      }
-    });
+    let qrCodeStyling;
 
     function generateCard() {
-      if (!uploadedImage) {
-        alert("Pilih gambar desain kartu Anda terlebih dahulu di kolom nomor 1!");
-        return;
-      }
-
       let url = document.getElementById('igInput').value.trim();
       if (!url) {
         alert("Masukkan link profil Instagram!");
@@ -136,60 +118,95 @@
         url = "https://" + url;
       }
 
-      const tempQr = document.getElementById('tempQr');
-      tempQr.innerHTML = "";
+      // Bersihkan QR lama jika ada
+      const container = document.getElementById('qrContainer');
+      container.innerHTML = "";
 
-      // Buat QR Code resolusi tinggi
-      new QRCode(tempQr, {
-        text: url,
-        width: 800,
-        height: 800,
-        colorDark: "#1a1a1a",
-        colorLight: "#ffffff",
-        correctLevel: QRCode.CorrectLevel.H
+      // 1. Konfigurasi QR Code Dot-Pattern (Gaya Titik-Titik)
+      qrCodeStyling = new QRCodeStyling({
+        width: 1000,
+        height: 1000,
+        data: url,
+        margin: 0,
+        type: "canvas",
+        dotsOptions: {
+          type: "dots", // GAYA TITIK-TITIK
+          color: "#1a1a1a" // Warna titik (hitam pekat)
+        },
+        backgroundOptions: {
+          color: "#ffffff" // Background kotak putih
+        },
+        imageOptions: {
+          crossOrigin: "anonymous",
+          margin: 10 // Jarak logo ke titik-titik
+        },
+        cornersSquareOptions: {
+          type: "extra-rounded" // Sudut kotak luar
+        },
+        cornersDotOptions: {
+          type: "dot" // Sudut titik dalam
+        }
       });
 
+      // 2. Tambahkan logo Instagram di tengah QR (Gaya Titik-Titik)
+      // Gunakan logo Instagram resmi dengan background putih melingkar agar terlihat jelas.
+      qrCodeStyling.update({
+        image: "https://upload.wikimedia.org/wikipedia/commons/e/e7/Instagram_logo_2016.svg"
+      });
+
+      // 3. Render QR code ke dalam container canvas
+      qrCodeStyling.append(container);
+
+      // 4. Tunggu render selesai lalu gabungkan ke template
       setTimeout(() => {
-        const qrImage = tempQr.querySelector('img');
-        if (qrImage) {
-          drawCanvas(qrImage);
+        const qrCanvas = container.querySelector('canvas');
+        if (qrCanvas) {
+          drawCanvas(qrCanvas);
         }
-      }, 300);
+      }, 500);
     }
 
-    function drawCanvas(qrImage) {
+    function drawCanvas(qrCanvas) {
       const canvas = document.getElementById('cardCanvas');
       const ctx = canvas.getContext('2d');
 
-      canvas.width = uploadedImage.width;
-      canvas.height = uploadedImage.height;
+      // Samakan resolusi canvas dengan resolusi asli gambar template
+      canvas.width = bgImage.width;
+      canvas.height = bgImage.height;
 
-      // 1. Tempel Background Desain
-      ctx.drawImage(uploadedImage, 0, 0);
+      // 1. Gambar desain background utama (Template Anda)
+      ctx.drawImage(bgImage, 0, 0);
 
-      // 2. Posisi Kotak QR (Sesuai proporsi desain kartu)
-      const qrSize = canvas.width * 0.235;
-      const qrX = canvas.width * 0.585;
-      const qrY = canvas.height * 0.627;
+      // 2. Tentukan posisi kotak QR (Pas-in ke kotak putih desain Anda)
+      // Koordinat ini didasarkan pada proporsi layout gambar template Anda.
+      // Sesuai desain Anda[cite: 5]:
+      const qrSize = canvas.width * 0.235; // Ukuran QR disesuaikan
+      const qrX = canvas.width * 0.585;   // Posisi horizontal
+      const qrY = canvas.height * 0.627;  // Posisi vertikal
 
-      // Kotak latar putih di balik QR
+      // Kotak latar putih halus di area QR (agar menimpa desain lama)
       ctx.fillStyle = "#ffffff";
       ctx.fillRect(qrX, qrY, qrSize, qrSize);
 
-      // 3. Tempel QR Code
-      ctx.drawImage(qrImage, qrX, qrY, qrSize, qrSize);
+      // 3. Tempel QR Code (Canvas) yang baru digenerate
+      ctx.drawImage(qrCanvas, qrX, qrY, qrSize, qrSize);
 
-      // Munculkan tombol download
+      // Tampilkan tombol download
       document.getElementById('downloadBtn').style.display = "block";
     }
 
     function downloadImage() {
       const canvas = document.getElementById('cardCanvas');
       const link = document.createElement('a');
-      link.download = 'kartu-instagram-ready.png';
+      link.download = 'kartu-instagram-siap-cetak.png';
       link.href = canvas.toDataURL('image/png');
       link.click();
     }
+
+    // Pastikan template gambar sudah terload sebelum generate
+    bgImage.onerror = function() {
+        alert("File 'template.jpg' tidak ditemukan. Pastikan sudah upload file gambar dengan nama persis template.jpg ke GitHub.");
+    };
   </script>
 </body>
 </html>
