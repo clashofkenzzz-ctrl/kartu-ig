@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Instagram Card Generator - 300 DPI</title>
+  <title>Instagram Card Generator - Custom Position</title>
   
   <!-- Library QR Code Dot Style -->
   <script src="https://unpkg.com/qr-code-styling@1.5.0/lib/qr-code-styling.js"></script>
@@ -24,7 +24,7 @@
       padding: 24px;
       border-radius: 16px;
       width: 100%;
-      max-width: 480px;
+      max-width: 500px;
       box-shadow: 0 10px 25px rgba(0,0,0,0.4);
       margin-bottom: 24px;
       box-sizing: border-box;
@@ -46,6 +46,25 @@
     }
     input[type="file"] { padding: 8px; cursor: pointer; }
     input:focus { border-color: #38bdf8; }
+    .slider-group {
+      background: #0f172a;
+      padding: 14px;
+      border-radius: 10px;
+      margin-bottom: 16px;
+      border: 1px solid #334155;
+    }
+    .slider-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      font-size: 13px;
+    }
+    .slider-item:last-child { margin-bottom: 0; }
+    .slider-item input[type="range"] {
+      width: 60%;
+      cursor: pointer;
+    }
     button {
       width: 100%;
       padding: 14px;
@@ -69,7 +88,7 @@
       flex-direction: column;
       align-items: center;
       width: 100%;
-      max-width: 480px;
+      max-width: 500px;
     }
     canvas {
       width: 100%;
@@ -83,14 +102,34 @@
 <body>
 
   <div class="panel">
-    <h2>Instagram Card Maker</h2>
-    <p class="desc">Generate kartu dengan QR titik-titik (dot-style) & logo Instagram.</p>
+    <h2>Instagram Card Adjuster</h2>
+    <p class="desc">Pas-kan posisi QR code secara real-time agar tidak menimpa teks.</p>
 
     <label>1. Pilih Desain Template Kartu (JPG / PNG):</label>
     <input type="file" id="bgInput" accept="image/*">
 
     <label>2. Masukkan Link Profil Instagram:</label>
     <input type="text" id="igInput" placeholder="https://www.instagram.com/username">
+
+    <!-- Controller Slider Pengatur Posisi Realtime -->
+    <div class="slider-group">
+      <div class="slider-item">
+        <span>Naik / Turun (Y):</span>
+        <input type="range" id="posY" min="0.45" max="0.75" step="0.005" value="0.525">
+      </div>
+      <div class="slider-item">
+        <span>Kiri / Kanan (X):</span>
+        <input type="range" id="posX" min="0.45" max="0.75" step="0.005" value="0.590">
+      </div>
+      <div class="slider-item">
+        <span>Ukuran QR:</span>
+        <input type="range" id="sizeQR" min="0.15" max="0.30" step="0.005" value="0.215">
+      </div>
+      <div class="slider-item">
+        <span>Lengkung Sudut:</span>
+        <input type="range" id="radiusQR" min="0" max="0.05" step="0.002" value="0.025">
+      </div>
+    </div>
 
     <button onclick="generateCard()">Generate Kartu</button>
     <button id="downloadBtn" class="btn-download" onclick="downloadImage()">Download Hasil Siap Cetak (PNG)</button>
@@ -104,6 +143,7 @@
 
   <script>
     let loadedBg = null;
+    let currentQrCanvas = null;
 
     const defaultBg = new Image();
     defaultBg.crossOrigin = "anonymous";
@@ -116,19 +156,30 @@
         const reader = new FileReader();
         reader.onload = function(event) {
           const img = new Image();
-          img.onload = () => { loadedBg = img; };
+          img.onload = () => { 
+            loadedBg = img; 
+            if (currentQrCanvas) drawFinalCard();
+          };
           img.src = event.target.result;
         };
         reader.readAsDataURL(file);
       }
     });
 
-    // Logo Instagram Internal Vektor Base64
-    const igLogoSvg = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 448 512'><radialGradient id='rg' r='150%' cx='30%' cy='107%'><stop offset='0' stop-color='%23fdf497'/><stop offset='0.05' stop-color='%23fdf497'/><stop offset='0.45' stop-color='%23fd5949'/><stop offset='0.6' stop-color='%23d6249f'/><stop offset='0.9' stop-color='%23285AEB'/></radialGradient><path fill='url(%23rg)' d='M224.1 141c-63.6 0-114.9 51.3-114.9 114.9s51.3 114.9 114.9 114.9S339 319.5 339 255.9 287.7 141 224.1 141zm0 189.6c-41.1 0-74.7-33.5-74.7-74.7s33.5-74.7 74.7-74.7 74.7 33.5 74.7 74.7-33.6 74.7-74.7 74.7zm146.4-194.3c0 14.9-12 26.8-26.8 26.8-14.9 0-26.8-12-26.8-26.8s12-26.8 26.8-26.8 26.8 12 26.8 26.8zm76.1 27.2c-1.7-35.9-9.9-67.7-36.2-93.9-26.2-26.2-58-34.4-93.9-36.2-37-2.1-147.9-2.1-184.9 0-35.8 1.7-67.6 9.9-93.9 36.1s-34.4 58-36.2 93.9c-2.1 37-2.1 147.9 0 184.9 1.7 35.9 9.9 67.7 36.2 93.9s58 34.4 93.9 36.2c37 2.1 147.9 2.1 184.9 0 35.9-1.7 67.7-9.9 93.9-36.2 26.2-26.2 34.4-58 36.2-93.9 2.1-37 2.1-147.8 0-184.8zM398.8 388c-7.8 19.6-22.9 34.7-42.6 42.6-29.5 11.7-99.5 9-132.1 9s-102.7 2.6-132.1-9c-19.6-7.8-34.7-22.9-42.6-42.6-11.7-29.5-9-99.5-9-132.1s-2.6-102.7 9-132.1c7.8-19.6 22.9-34.7 42.6-42.6 29.5-11.7 99.5-9 132.1-9s102.7-2.6 132.1 9c19.6 7.8 34.7 22.9 42.6 42.6 11.7 29.5 9 99.5 9 132.1z'/></svg>";
+    // Slider Event Listener untuk update otomatis
+    ['posY', 'posX', 'sizeQR', 'radiusQR'].forEach(id => {
+      document.getElementById(id).addEventListener('input', () => {
+        if (currentQrCanvas && loadedBg) {
+          drawFinalCard();
+        }
+      });
+    });
+
+    const igLogoSvg = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 448 512'><radialGradient id='rg' r='150%' cx='30%' cy='107%'><stop offset='0' stop-color='%23fdf497'/><stop offset='0.05' stop-color='%23fdf497'/><stop offset='0.45' stop-color='%23fd5949'/><stop offset='0.6' stop-color='%23d6249f'/><stop offset='0.9' stop-color='%23285AEB'/></radialGradient><path fill='url(%23rg)' d='M224.1 141c-63.6 0-114.9 51.3-114.9 114.9s51.3 114.9 114.9 114.9S339 319.5 339 255.9 287.7 141 224.1 141zm0 189.6c-41.1 0-74.7-33.5-74.7-74.7s33.5-74.7 74.7-74.7 74.7 33.5 74.7 74.7-33.6 74.7-74.7 74.7zm146.4-194.3c0 14.9-12 26.8-26.8 26.8-14.9 0-26.8-12-26.8-26.8s12-26.8 26.8-26.8 26.8 12 26.8 26.8zm76.1 27.2c-1.7-35.9-9.9-67.7-36.2-93.9-26.2-26.2-58-34.4-93.9-36.2-37-2.1-147.9-2.1-184.9 0-35.8 1.7-67.6 9.9-93.9 36.1s-34.4 58-36.2 93.9c-2.1 37-2.1 147.9 0 184.9 1.7 35.9 9.9 67.7 36.2 93.9s58 34.4 93.9 36.2c37 2.1 147.9 2.1 184.9 0 35.9-1.7 67.7-9.9 93.9-36.2 26.2-26.2 34.4-58 36.2-93.9 2.1-37 2.1-147.8 0-184.8zM398.8 388c-7.8 19.6-22.9 34.7-42.6 42.6-29.5 11.7-99.5 9-132.1 9s-102.7 2.6-132.1-9c-19.6-7.8-34.7-22.9-42.6-42.6-11.7-29.5-9-99.5-9-132.1s-2.6-102.7 9-132.1c7.8-19.6 22.9-34.7 42.6-42.6 29.5-11.7 99.5-9 132.1-9s102.7-2.6 132.1 9c19.6 7.8 34.7 22.9 42.6 42.6 11.7 29.5 9 99.5 9 132.1s2.7 102.7-9 132.1z'/></svg>";
 
     function generateCard() {
       if (!loadedBg) {
-        alert("Pilih template desain kartu Anda terlebih dahulu di nomor 1!");
+        alert("Pilih template desain kartu terlebih dahulu di nomor 1!");
         return;
       }
 
@@ -149,7 +200,7 @@
         width: 1000,
         height: 1000,
         data: url,
-        margin: 12,
+        margin: 10,
         type: "canvas",
         dotsOptions: {
           type: "dots",
@@ -176,37 +227,37 @@
       qrCode.append(container);
 
       setTimeout(() => {
-        const qrCanvas = container.querySelector('canvas');
-        if (qrCanvas) {
-          drawFinalCard(qrCanvas);
+        currentQrCanvas = container.querySelector('canvas');
+        if (currentQrCanvas) {
+          drawFinalCard();
         }
       }, 400);
     }
 
-    function drawFinalCard(qrCanvas) {
+    function drawFinalCard() {
       const canvas = document.getElementById('cardCanvas');
       const ctx = canvas.getContext('2d');
 
       canvas.width = loadedBg.width;
       canvas.height = loadedBg.height;
 
-      // 1. Gambar template asli
+      // Ambil nilai dari slider
+      const scaleY = parseFloat(document.getElementById('posY').value);
+      const scaleX = parseFloat(document.getElementById('posX').value);
+      const scaleSize = parseFloat(document.getElementById('sizeQR').value);
+      const scaleRadius = parseFloat(document.getElementById('radiusQR').value);
+
+      // Gambar background kartu
       ctx.drawImage(loadedBg, 0, 0);
 
-      // 2. POSISI PRESISI BARU:
-      // Ukuran diperkecil agar tidak menabrak teks SCAN QR HERE di bawahnya
-      const qrW = canvas.width * 0.235;
-      const qrH = canvas.width * 0.235;
+      // Hitung koordinat presisi
+      const qrW = canvas.width * scaleSize;
+      const qrH = canvas.width * scaleSize;
+      const qrX = canvas.width * scaleX;
+      const qrY = canvas.height * scaleY;
+      const radius = canvas.width * scaleRadius;
 
-      // Geser horizontal ke tengah area kanan
-      const qrX = canvas.width * 0.580;
-
-      // Geser naik ke atas (dari 0.624 menjadi 0.575) agar tepat di atas tulisan
-      const qrY = canvas.height * 0.575;
-
-      const radius = canvas.width * 0.022;
-
-      // Gambar kotak putih background QR yang rapi
+      // Gambar kotak putih dengan rounded corner
       ctx.save();
       ctx.fillStyle = "#ffffff";
       ctx.beginPath();
@@ -214,8 +265,8 @@
       ctx.fill();
       ctx.clip();
 
-      // 3. Tempel QR Code
-      ctx.drawImage(qrCanvas, qrX, qrY, qrW, qrH);
+      // Tempel QR Code
+      ctx.drawImage(currentQrCanvas, qrX, qrY, qrW, qrH);
       ctx.restore();
 
       document.getElementById('downloadBtn').style.display = "block";
