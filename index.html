@@ -67,9 +67,10 @@
 
 <script>
   const urlParams = new URLSearchParams(window.location.search);
-  const cardId = urlParams.get('id');
+  // Jika tidak ada parameter ID, otomatis pakai "default"
+  const cardId = urlParams.get('id') || 'default';
 
-  // Cek apakah kartu sudah aktif sebelumnya di penyimpanan lokal browser
+  // Periksa apakah kartu ini sudah disimpan sebelumnya
   const savedTarget = localStorage.getItem('card_' + cardId);
 
   if (savedTarget) {
@@ -88,17 +89,13 @@
       input = "https://" + input;
     }
 
-    if (!cardId) {
-      document.getElementById('statusMsg').innerText = "Kartu tidak memiliki ID valid.";
-      return;
-    }
-
+    // Simpan target URL ke memori browser
     localStorage.setItem('card_' + cardId, input);
     document.getElementById('box').innerHTML = "<p>Kartu Berhasil Diaktifkan! Mengalihkan...</p>";
     
     setTimeout(() => {
       window.location.href = input;
-    }, 800);
+    }, 500);
   }
 </script>
 
