@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Card Activation</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #fafafa;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      color: #262626;
+      padding: 16px;
+      box-sizing: border-box;
+    }
+    .card {
+      background: #ffffff;
+      padding: 32px 24px;
+      border-radius: 18px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+      max-width: 360px;
+      width: 100%;
+      text-align: center;
+    }
+    h2 { margin: 0 0 10px; font-size: 20px; font-weight: 700; }
+    p { font-size: 14px; color: #737373; margin: 0 0 24px; line-height: 1.4; }
+    input {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid #dbdbdb;
+      border-radius: 10px;
+      box-sizing: border-box;
+      font-size: 14px;
+      margin-bottom: 14px;
+      outline: none;
+    }
+    input:focus { border-color: #0095f6; }
+    button {
+      width: 100%;
+      padding: 12px;
+      background: #0095f6;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background 0.2s;
+    }
+    button:hover { background: #1877f2; }
+    .status { margin-top: 14px; font-size: 13px; color: #ed4956; font-weight: 500; }
+  </style>
+</head>
+<body>
+
+<div class="card" id="box">
+  <h2>Aktivasi Kartu</h2>
+  <p>Masukkan link profil Instagram Anda untuk mengaktifkan kartu ini.</p>
+  <input type="text" id="igLink" placeholder="instagram.com/username">
+  <button onclick="saveLink()">Simpan & Aktifkan</button>
+  <div class="status" id="statusMsg"></div>
+</div>
+
+<script>
+  const urlParams = new URLSearchParams(window.location.search);
+  const cardId = urlParams.get('id');
+
+  // Cek apakah kartu sudah aktif sebelumnya di penyimpanan lokal browser
+  const savedTarget = localStorage.getItem('card_' + cardId);
+
+  if (savedTarget) {
+    document.getElementById('box').innerHTML = "<p>Membuka Instagram...</p>";
+    window.location.href = savedTarget;
+  }
+
+  function saveLink() {
+    let input = document.getElementById('igLink').value.trim();
+    if (!input) {
+      document.getElementById('statusMsg').innerText = "Masukkan link Instagram terlebih dahulu.";
+      return;
+    }
+
+    if (!input.startsWith("http://") && !input.startsWith("https://")) {
+      input = "https://" + input;
+    }
+
+    if (!cardId) {
+      document.getElementById('statusMsg').innerText = "Kartu tidak memiliki ID valid.";
+      return;
+    }
+
+    localStorage.setItem('card_' + cardId, input);
+    document.getElementById('box').innerHTML = "<p>Kartu Berhasil Diaktifkan! Mengalihkan...</p>";
+    
+    setTimeout(() => {
+      window.location.href = input;
+    }, 800);
+  }
+</script>
+
+</body>
+</html>
