@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Dashboard Kartu Dinamis</title>
+  <title>Dashboard Kontrol Kartu Instagram (Unlimited System)</title>
   <style>
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background: #0f172a;
+      background: #0b1120;
       color: #f8fafc;
       margin: 0;
       padding: 24px 16px;
@@ -15,163 +15,242 @@
       flex-direction: column;
       align-items: center;
     }
-    .header-panel {
-      background: #1e293b;
+    .main-container {
+      width: 100%;
+      max-width: 980px;
+    }
+    .header-card {
+      background: #151f32;
+      border: 1px solid #1e293b;
       padding: 24px;
-      border-radius: 16px;
-      width: 100%;
-      max-width: 760px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-      box-sizing: border-box;
+      border-radius: 14px;
       margin-bottom: 20px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.4);
     }
-    h2 { margin: 0 0 6px; font-size: 22px; text-align: center; }
-    p.desc { font-size: 13px; color: #94a3b8; margin: 0 0 16px; text-align: center; }
-    .search-box {
-      width: 100%;
-      padding: 12px 16px;
-      border: 1px solid #334155;
-      border-radius: 10px;
-      background: #0f172a;
-      color: #fff;
-      font-size: 14px;
-      box-sizing: border-box;
-      outline: none;
-      margin-bottom: 14px;
-    }
-    .search-box:focus { border-color: #38bdf8; }
-    .action-bar {
+    .header-top {
       display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      align-items: center;
       justify-content: space-between;
-      border-top: 1px solid #334155;
-      padding-top: 14px;
-    }
-    .add-custom {
-      display: flex;
-      gap: 8px;
-      flex: 1;
-      min-width: 240px;
-    }
-    .input-custom {
-      flex: 1;
-      padding: 10px 12px;
-      border: 1px solid #334155;
-      border-radius: 8px;
-      background: #0f172a;
-      color: #fff;
-      font-size: 13px;
-      outline: none;
-      text-transform: uppercase;
-    }
-    .card-list {
-      width: 100%;
-      max-width: 760px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-    .card-item {
-      background: #1e293b;
-      border: 1px solid #334155;
-      padding: 16px;
-      border-radius: 12px;
-      display: flex;
-      flex-wrap: wrap;
       align-items: center;
+      flex-wrap: wrap;
       gap: 12px;
-      box-sizing: border-box;
-      transition: border-color 0.2s;
+      margin-bottom: 16px;
     }
-    .card-item:hover { border-color: #475569; }
-    .card-badge-col {
-      min-width: 110px;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-    .card-code {
-      font-size: 16px;
+    .header-title h2 {
+      margin: 0 0 4px;
+      font-size: 20px;
       font-weight: 700;
-      color: #38bdf8;
-      letter-spacing: 0.5px;
     }
-    .badge {
-      display: inline-block;
-      padding: 3px 8px;
-      border-radius: 6px;
-      font-size: 11px;
-      font-weight: 600;
-      width: fit-content;
-    }
-    .badge-active { background: #065f46; color: #34d399; }
-    .badge-empty { background: #7f1d1d; color: #fca5a5; }
-    .card-input-col {
-      flex: 1;
-      min-width: 220px;
-    }
-    .url-input {
-      width: 100%;
-      padding: 10px 12px;
-      border: 1px solid #334155;
-      border-radius: 8px;
-      background: #0f172a;
-      color: #fff;
+    .header-title p {
+      margin: 0;
       font-size: 13px;
-      box-sizing: border-box;
-      outline: none;
+      color: #94a3b8;
     }
-    .url-input:focus { border-color: #38bdf8; }
-    .card-btn-col {
+    .header-status-box {
       display: flex;
-      gap: 8px;
+      align-items: center;
+      gap: 10px;
     }
-    button {
-      padding: 10px 14px;
+    .db-count-badge {
+      background: #0f172a;
+      border: 1px solid #334155;
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      color: #cbd5e1;
+    }
+    .db-count-badge b { color: #38bdf8; }
+    .btn-refresh {
+      background: #2563eb;
+      color: #fff;
       border: none;
+      padding: 8px 16px;
       border-radius: 8px;
       font-weight: 600;
       cursor: pointer;
       font-size: 13px;
       transition: opacity 0.2s;
+    }
+    .btn-refresh:hover { opacity: 0.9; }
+
+    .control-bar {
+      background: #0f172a;
+      border: 1px solid #1e293b;
+      padding: 14px 18px;
+      border-radius: 10px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+    }
+    .control-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: #cbd5e1;
+    }
+    .input-small {
+      width: 70px;
+      background: #1e293b;
+      border: 1px solid #334155;
+      color: #fff;
+      padding: 7px 10px;
+      border-radius: 6px;
+      font-size: 13px;
+      text-align: center;
+      outline: none;
+    }
+    .input-search {
+      width: 170px;
+      background: #1e293b;
+      border: 1px solid #334155;
+      color: #fff;
+      padding: 7px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      outline: none;
+    }
+    .btn-apply {
+      background: #2563eb;
+      color: #fff;
+      border: none;
+      padding: 7px 14px;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 13px;
+    }
+    .btn-show {
+      background: #e11d48;
+      color: #fff;
+      border: none;
+      padding: 7px 14px;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 13px;
+    }
+
+    .card-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .card-row {
+      background: #151f32;
+      border: 1px solid #1e293b;
+      padding: 12px 18px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      box-sizing: border-box;
+      transition: border-color 0.2s;
+    }
+    .card-row:hover { border-color: #334155; }
+    .card-id-tag {
+      background: #e11d48;
+      color: white;
+      font-weight: 700;
+      font-size: 13px;
+      padding: 6px 14px;
+      border-radius: 6px;
+      min-width: 75px;
+      text-align: center;
+      letter-spacing: 0.5px;
+    }
+    .status-tag {
+      font-size: 12px;
+      padding: 5px 10px;
+      border-radius: 20px;
+      background: #0f172a;
+      border: 1px solid #334155;
+      color: #94a3b8;
       white-space: nowrap;
     }
-    button:hover { opacity: 0.9; }
-    .btn-save { background: #10b981; color: white; }
-    .btn-reset { background: #ef4444; color: white; }
-    .btn-primary { background: #0284c7; color: white; }
-    .btn-secondary { background: #475569; color: white; }
-    .global-status {
+    .status-tag.active {
+      color: #34d399;
+      border-color: #065f46;
+      background: #022c22;
+    }
+    .input-url-box {
+      flex: 1;
+      min-width: 220px;
+    }
+    .input-url {
+      width: 100%;
+      background: #0b1120;
+      border: 1px solid #1e293b;
+      padding: 9px 14px;
+      border-radius: 6px;
+      color: #fff;
+      font-size: 13px;
+      box-sizing: border-box;
+      outline: none;
+    }
+    .input-url:focus { border-color: #38bdf8; }
+    .actions-box {
+      display: flex;
+      gap: 6px;
+    }
+    .btn-action {
+      border: none;
+      padding: 8px 14px;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 12px;
+      transition: opacity 0.2s;
+    }
+    .btn-action:hover { opacity: 0.9; }
+    .btn-act-save { background: #059669; color: #fff; }
+    .btn-act-reset { background: #475569; color: #cbd5e1; }
+    .btn-act-open { background: #1e293b; color: #94a3b8; border: 1px solid #334155; }
+    .global-notif {
       font-size: 13px;
       text-align: center;
       margin-top: 10px;
       font-weight: 600;
+      color: #38bdf8;
     }
   </style>
 </head>
 <body>
 
-  <div class="header-panel">
-    <h2>Manajemen Kartu Smart NFC & QR</h2>
-    <p class="desc">Daftar kartu akan otomatis bertambah saat nomor baru dibuat atau diaktifkan.</p>
-    
-    <input type="text" id="filterInput" class="search-box" placeholder="Cari nomor ID (misal: A0025) atau username IG..." oninput="filterCards()">
-    
-    <div class="action-bar">
-      <button class="btn-primary" onclick="addNextCard()">+ Tambah Kartu Berikutnya (<span id="nextIdLabel">...</span>)</button>
-      
-      <div class="add-custom">
-        <input type="text" id="customIdInput" class="input-custom" placeholder="ID Bebas (misal: A0050)">
-        <button class="btn-secondary" onclick="addCustomCard()">Tambah</button>
+  <div class="main-container">
+    <div class="header-card">
+      <div class="header-top">
+        <div class="header-title">
+          <h2>Dashboard Kontrol Kartu Instagram (Unlimited System)</h2>
+          <p>Kelola tautan kartu tanpa batasan jumlah ID.</p>
+        </div>
+        <div class="header-status-box">
+          <div class="db-count-badge">Aktif di DB: <b id="activeCount">0</b></div>
+          <button class="btn-refresh" onclick="loadAllData()">Segarkan DB</button>
+        </div>
       </div>
+
+      <div class="control-bar">
+        <div class="control-group">
+          <span>Tampilkan Urutan ID Sampai:</span>
+          <input type="number" id="limitInput" class="input-small" value="24" min="1">
+          <button class="btn-apply" onclick="applyLimit()">Terapkan Urutan</button>
+        </div>
+
+        <div class="control-group">
+          <span>Buka/Cari ID Khusus:</span>
+          <input type="text" id="customInput" class="input-search" placeholder="misal: 100 atau A0050">
+          <button class="btn-show" onclick="showCustomCard()">Tampilkan</button>
+        </div>
+      </div>
+
+      <div id="globalNotif" class="global-notif">Memuat data dari cloud...</div>
     </div>
 
-    <div id="globalStatus" class="global-status" style="color: #38bdf8;">Memuat data dari cloud...</div>
+    <div class="card-list" id="cardsList"></div>
   </div>
-
-  <div class="card-list" id="cardsContainer"></div>
 
   <script>
     // ================= MASUKKAN KUNCI JSONBIN DI SINI =================
@@ -180,219 +259,13 @@
     // ===================================================================
 
     let allDatabase = {};
-    let currentMaxCardNum = 24; // Minimal mulai dari 24
+    let currentLimit = 24;
+    let customCardsPinned = [];
 
     async function loadAllData() {
-      const status = document.getElementById('globalStatus');
+      const notif = document.getElementById('globalNotif');
+      notif.style.color = '#38bdf8';
+      notif.innerText = "Mengambil data terbaru dari cloud...";
+
       try {
-        const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
-          headers: { "X-Master-Key": MASTER_KEY }
-        });
-        const data = await res.json();
-        allDatabase = data.record || {};
-        
-        // Cari angka kartu tertinggi yang sudah tersimpan di database
-        detectMaxNumber();
-
-        status.style.color = '#10b981';
-        status.innerText = "Data berhasil dimuat. Siap digunakan.";
-        renderCards();
-      } catch (e) {
-        status.style.color = '#ef4444';
-        status.innerText = "Gagal koneksi database. Periksa Bin ID dan Master Key!";
-      }
-    }
-
-    // Mendeteksi ID terbesar di database (misal jika ada A0035, batas otomatis jadi 35)
-    function detectMaxNumber() {
-      for (const key of Object.keys(allDatabase)) {
-        if (/^A\d+$/i.test(key)) {
-          const num = parseInt(key.substring(1), 10);
-          if (!isNaN(num) && num > currentMaxCardNum) {
-            currentMaxCardNum = num;
-          }
-        }
-      }
-      updateNextLabel();
-    }
-
-    function updateNextLabel() {
-      const nextNum = currentMaxCardNum + 1;
-      document.getElementById('nextIdLabel').innerText = "A" + String(nextNum).padStart(4, '0');
-    }
-
-    function renderCards() {
-      const container = document.getElementById('cardsContainer');
-      container.innerHTML = "";
-
-      // 1. Render semua kartu berurutan dari 1 sampai nomor terbesar
-      for (let i = 1; i <= currentMaxCardNum; i++) {
-        const id = "A" + String(i).padStart(4, '0');
-        renderSingleItem(id, container);
-      }
-
-      // 2. Render kartu yang memiliki ID custom di luar pola A0001 (jika ada)
-      for (const key of Object.keys(allDatabase)) {
-        if (!document.getElementById(`item-${key}`)) {
-          renderSingleItem(key, container);
-        }
-      }
-
-      filterCards(); // Refresh filter jika sedang mencari
-    }
-
-    function renderSingleItem(id, container) {
-      const currentUrl = allDatabase[id] || "";
-      const isActive = Boolean(currentUrl);
-
-      const cardItem = document.createElement('div');
-      cardItem.className = 'card-item';
-      cardItem.id = `item-${id}`;
-      cardItem.setAttribute('data-id', id);
-
-      cardItem.innerHTML = `
-        <div class="card-badge-col">
-          <span class="card-code">${id}</span>
-          <span class="badge ${isActive ? 'badge-active' : 'badge-empty'}" id="badge-${id}">
-            ${isActive ? 'AKTIF' : 'KOSONG'}
-          </span>
-        </div>
-
-        <div class="card-input-col">
-          <input type="text" class="url-input" id="input-${id}" 
-                 value="${currentUrl}" 
-                 placeholder="Belum ada link profil IG...">
-        </div>
-
-        <div class="card-btn-col">
-          <button class="btn-save" onclick="updateSingleCard('${id}')">Simpan</button>
-          <button class="btn-reset" onclick="resetSingleCard('${id}')">Reset</button>
-        </div>
-      `;
-
-      container.appendChild(cardItem);
-    }
-
-    // Tombol Cepat: Tambah nomor setelahnya (A0025, A0026, dst)
-    function addNextCard() {
-      currentMaxCardNum++;
-      const newId = "A" + String(currentMaxCardNum).padStart(4, '0');
-      const container = document.getElementById('cardsContainer');
-      renderSingleItem(newId, container);
-      updateNextLabel();
-      
-      // Gulir layar ke kartu baru yang baru ditambahkan
-      const newItem = document.getElementById(`item-${newId}`);
-      if (newItem) newItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
-
-    // Tambah ID khusus secara manual
-    function addCustomCard() {
-      const input = document.getElementById('customIdInput');
-      const customId = input.value.trim().toUpperCase();
-      
-      if (!customId) {
-        alert("Masukkan ID kartu terlebih dahulu!");
-        return;
-      }
-
-      if (document.getElementById(`item-${customId}`)) {
-        alert(`Kartu dengan ID ${customId} sudah ada di dalam daftar!`);
-        document.getElementById(`item-${customId}`).scrollIntoView({ behavior: 'smooth', block: 'center' });
-        return;
-      }
-
-      // Jika formatnya A+angka dan lebih besar dari max, update counter max
-      if (/^A\d+$/.test(customId)) {
-        const num = parseInt(customId.substring(1), 10);
-        if (num > currentMaxCardNum) {
-          currentMaxCardNum = num;
-          updateNextLabel();
-        }
-      }
-
-      const container = document.getElementById('cardsContainer');
-      renderSingleItem(customId, container);
-      input.value = "";
-      document.getElementById(`item-${customId}`).scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
-
-    function filterCards() {
-      const query = document.getElementById('filterInput').value.trim().toLowerCase();
-      const items = document.querySelectorAll('.card-item');
-
-      items.forEach(item => {
-        const id = item.getAttribute('data-id').toLowerCase();
-        const inputVal = item.querySelector('.url-input').value.toLowerCase();
-
-        if (id.includes(query) || inputVal.includes(query)) {
-          item.style.display = 'flex';
-        } else {
-          item.style.display = 'none';
-        }
-      });
-    }
-
-    async function updateSingleCard(id) {
-      let inputVal = document.getElementById(`input-${id}`).value.trim();
-      const status = document.getElementById('globalStatus');
-
-      if (!inputVal) {
-        alert("Link tidak boleh kosong! Jika ingin mengosongkan kartu, gunakan tombol Reset.");
-        return;
-      }
-
-      if (!inputVal.startsWith("http://") && !inputVal.startsWith("https://")) {
-        inputVal = "https://" + inputVal;
-        document.getElementById(`input-${id}`).value = inputVal;
-      }
-
-      status.style.color = '#38bdf8';
-      status.innerText = `Menyimpan perubahan untuk ${id}...`;
-
-      allDatabase[id] = inputVal;
-      await syncDatabase(`Kartu ${id} berhasil diupdate!`, id, true);
-    }
-
-    async function resetSingleCard(id) {
-      if (!confirm(`Yakin ingin mengosongkan link pada kartu ${id}?`)) return;
-
-      const status = document.getElementById('globalStatus');
-      status.style.color = '#38bdf8';
-      status.innerText = `Mereset kartu ${id}...`;
-
-      delete allDatabase[id];
-      document.getElementById(`input-${id}`).value = "";
-      await syncDatabase(`Kartu ${id} berhasil direset (kosong)!`, id, false);
-    }
-
-    async function syncDatabase(msgText, id, isActive) {
-      const status = document.getElementById('globalStatus');
-      try {
-        await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            "X-Master-Key": MASTER_KEY
-          },
-          body: JSON.stringify(allDatabase)
-        });
-
-        status.style.color = '#10b981';
-        status.innerText = msgText;
-
-        const badge = document.getElementById(`badge-${id}`);
-        if (badge) {
-          badge.className = `badge ${isActive ? 'badge-active' : 'badge-empty'}`;
-          badge.innerText = isActive ? 'AKTIF' : 'KOSONG';
-        }
-      } catch (e) {
-        status.style.color = '#ef4444';
-        status.innerText = "Gagal memperbarui ke database cloud!";
-      }
-    }
-
-    window.onload = loadAllData;
-  </script>
-</body>
-</html>
+        const res = await fetch(`
