@@ -3,100 +3,136 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Dashboard Kartu</title>
+  <title>Admin Dashboard Kartu (A0001 - A0024)</title>
   <style>
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       background: #0f172a;
       color: #f8fafc;
       margin: 0;
-      padding: 30px 16px;
+      padding: 24px 16px;
       display: flex;
       flex-direction: column;
       align-items: center;
     }
-    .panel {
+    .header-panel {
       background: #1e293b;
       padding: 24px;
       border-radius: 16px;
       width: 100%;
-      max-width: 480px;
+      max-width: 720px;
       box-shadow: 0 10px 25px rgba(0,0,0,0.3);
       box-sizing: border-box;
       margin-bottom: 20px;
     }
-    h2 { margin: 0 0 8px; font-size: 20px; text-align: center; }
-    p.desc { font-size: 13px; color: #94a3b8; margin: 0 0 20px; text-align: center; }
-    label { font-size: 13px; font-weight: 600; color: #cbd5e1; display: block; margin-bottom: 6px; }
-    input[type="text"] {
+    h2 { margin: 0 0 6px; font-size: 22px; text-align: center; }
+    p.desc { font-size: 13px; color: #94a3b8; margin: 0 0 16px; text-align: center; }
+    .search-box {
       width: 100%;
-      padding: 12px;
+      padding: 12px 16px;
       border: 1px solid #334155;
       border-radius: 10px;
       background: #0f172a;
       color: #fff;
       font-size: 14px;
       box-sizing: border-box;
-      margin-bottom: 14px;
       outline: none;
     }
-    input:focus { border-color: #38bdf8; }
-    .btn-group {
+    .search-box:focus { border-color: #38bdf8; }
+    .card-list {
+      width: 100%;
+      max-width: 720px;
       display: flex;
-      gap: 10px;
-      margin-top: 6px;
+      flex-direction: column;
+      gap: 12px;
     }
-    button {
-      flex: 1;
-      padding: 12px;
-      border: none;
-      border-radius: 10px;
-      font-weight: 600;
-      cursor: pointer;
-      font-size: 14px;
-      transition: opacity 0.2s;
+    .card-item {
+      background: #1e293b;
+      border: 1px solid #334155;
+      padding: 16px;
+      border-radius: 12px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 12px;
+      box-sizing: border-box;
+      transition: border-color 0.2s;
     }
-    button:hover { opacity: 0.9; }
-    .btn-search { background: #38bdf8; color: #0f172a; }
-    .btn-save { background: #10b981; color: white; }
-    .btn-delete { background: #ef4444; color: white; }
-    .status { margin-top: 15px; font-size: 13px; text-align: center; font-weight: 600; }
+    .card-item:hover { border-color: #475569; }
+    .card-badge-col {
+      min-width: 110px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .card-code {
+      font-size: 16px;
+      font-weight: 700;
+      color: #38bdf8;
+      letter-spacing: 0.5px;
+    }
     .badge {
       display: inline-block;
-      padding: 4px 10px;
+      padding: 3px 8px;
       border-radius: 6px;
-      font-size: 12px;
-      margin-bottom: 10px;
+      font-size: 11px;
+      font-weight: 600;
+      width: fit-content;
     }
     .badge-active { background: #065f46; color: #34d399; }
     .badge-empty { background: #7f1d1d; color: #fca5a5; }
+    .card-input-col {
+      flex: 1;
+      min-width: 220px;
+    }
+    .url-input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      background: #0f172a;
+      color: #fff;
+      font-size: 13px;
+      box-sizing: border-box;
+      outline: none;
+    }
+    .url-input:focus { border-color: #38bdf8; }
+    .card-btn-col {
+      display: flex;
+      gap: 8px;
+    }
+    button {
+      padding: 10px 14px;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 13px;
+      transition: opacity 0.2s;
+    }
+    button:hover { opacity: 0.9; }
+    button:disabled { background: #475569; cursor: not-allowed; }
+    .btn-save { background: #10b981; color: white; }
+    .btn-reset { background: #ef4444; color: white; }
+    .global-status {
+      font-size: 13px;
+      text-align: center;
+      margin-top: 10px;
+      font-weight: 600;
+    }
   </style>
 </head>
 <body>
 
-  <div class="panel">
-    <h2>Pusat Kontrol Kartu</h2>
-    <p class="desc">Kelola, ganti, atau reset link IG untuk semua kartu.</p>
+  <div class="header-panel">
+    <h2>Manajemen Kartu A0001 - A0024</h2>
+    <p class="desc">Daftar semua kartu terpasang. Cari ID atau ketik username untuk filter.</p>
+    <input type="text" id="filterInput" class="search-box" placeholder="Ketik nomor kartu atau username IG untuk mencari..." oninput="filterCards()">
+    <div id="globalStatus" class="global-status" style="color: #38bdf8;">Memuat data dari cloud...</div>
+  </div>
 
-    <label>1. Masukkan Kode Kartu (Contoh: A0001):</label>
-    <div style="display: flex; gap: 8px;">
-      <input type="text" id="targetId" placeholder="A0001" style="text-transform: uppercase;">
-      <button class="btn-search" style="flex: 0 0 90px; height: 44px;" onclick="checkCard()">Cari</button>
-    </div>
-
-    <div id="cardDetails" style="display: none; margin-top: 10px;">
-      <div id="cardStatusBadge"></div>
-
-      <label>2. Link Instagram Tujuan:</label>
-      <input type="text" id="targetUrl" placeholder="https://www.instagram.com/username">
-
-      <div class="btn-group">
-        <button class="btn-save" onclick="saveCard()">Simpan / Update</button>
-        <button class="btn-delete" onclick="resetCard()">Kosongkan (Reset)</button>
-      </div>
-    </div>
-
-    <div class="status" id="statusMsg"></div>
+  <div class="card-list" id="cardsContainer">
+    <!-- List 24 kartu akan otomatis di-generate di sini -->
   </div>
 
   <script>
@@ -105,121 +141,144 @@
     const MASTER_KEY = "$2a$10$waCN6duNqzLWhwNhvvHrEOiwpzTenePD0oVUa2BJffn2/ME6Dz1FG";
     // ===================================================================
 
-    let allCardsData = {};
+    let allDatabase = {};
 
-    async function checkCard() {
-      const cardId = document.getElementById('targetId').value.trim().toUpperCase();
-      const status = document.getElementById('statusMsg');
-      const details = document.getElementById('cardDetails');
-
-      if (!cardId) {
-        status.style.color = '#ef4444';
-        status.innerText = "Masukkan ID kartu terlebih dahulu!";
-        return;
-      }
-
-      status.style.color = '#38bdf8';
-      status.innerText = "Mengambil data kartu dari cloud...";
-
+    // 1. Ambil data cloud saat pertama kali halaman dibuka
+    async function loadAllData() {
+      const status = document.getElementById('globalStatus');
       try {
         const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
           headers: { "X-Master-Key": MASTER_KEY }
         });
         const data = await res.json();
-        allCardsData = data.record || {};
-
-        details.style.display = 'block';
-        status.innerText = "";
-
-        const badge = document.getElementById('cardStatusBadge');
-        const urlInput = document.getElementById('targetUrl');
-
-        if (allCardsData[cardId]) {
-          badge.className = "badge badge-active";
-          badge.innerText = "Status: AKTIF (Sudah terisi)";
-          urlInput.value = allCardsData[cardId];
-        } else {
-          badge.className = "badge badge-empty";
-          badge.innerText = "Status: KOSONG (Belum aktif)";
-          urlInput.value = "";
-        }
+        allDatabase = data.record || {};
+        status.style.color = '#10b981';
+        status.innerText = "Data berhasil dimuat. Siap digunakan.";
+        renderCards();
       } catch (e) {
         status.style.color = '#ef4444';
-        status.innerText = "Gagal terhubung ke database. Cek API Key!";
+        status.innerText = "Gagal koneksi database. Periksa Bin ID dan Master Key!";
       }
     }
 
-    async function saveCard() {
-      const cardId = document.getElementById('targetId').value.trim().toUpperCase();
-      let newUrl = document.getElementById('targetUrl').value.trim();
-      const status = document.getElementById('statusMsg');
+    // 2. Tampilkan semua kartu dari A0001 sampai A0024
+    function renderCards() {
+      const container = document.getElementById('cardsContainer');
+      container.innerHTML = "";
 
-      if (!newUrl) {
-        status.style.color = '#ef4444';
-        status.innerText = "Link Instagram tidak boleh kosong!";
+      for (let i = 1; i <= 24; i++) {
+        const id = "A" + String(i).padStart(4, '0');
+        const currentUrl = allDatabase[id] || "";
+        const isActive = Boolean(currentUrl);
+
+        const cardItem = document.createElement('div');
+        cardItem.className = 'card-item';
+        cardItem.id = `item-${id}`;
+        cardItem.setAttribute('data-id', id);
+
+        cardItem.innerHTML = `
+          <div class="card-badge-col">
+            <span class="card-code">${id}</span>
+            <span class="badge ${isActive ? 'badge-active' : 'badge-empty'}" id="badge-${id}">
+              ${isActive ? 'AKTIF' : 'KOSONG'}
+            </span>
+          </div>
+
+          <div class="card-input-col">
+            <input type="text" class="url-input" id="input-${id}" 
+                   value="${currentUrl}" 
+                   placeholder="Belum ada link profil IG...">
+          </div>
+
+          <div class="card-btn-col">
+            <button class="btn-save" onclick="updateSingleCard('${id}')">Simpan</button>
+            <button class="btn-reset" onclick="resetSingleCard('${id}')">Reset</button>
+          </div>
+        `;
+
+        container.appendChild(cardItem);
+      }
+    }
+
+    // 3. Fitur Pencarian Real-Time (Live Search)
+    function filterCards() {
+      const query = document.getElementById('filterInput').value.trim().toLowerCase();
+      const items = document.querySelectorAll('.card-item');
+
+      items.forEach(item => {
+        const id = item.getAttribute('data-id').toLowerCase();
+        const inputVal = item.querySelector('.url-input').value.toLowerCase();
+
+        if (id.includes(query) || inputVal.includes(query)) {
+          item.style.display = 'flex';
+        } else {
+          item.style.display = 'none';
+        }
+      });
+    }
+
+    // 4. Update Link Kartu Tertentu
+    async function updateSingleCard(id) {
+      let inputVal = document.getElementById(`input-${id}`).value.trim();
+      const status = document.getElementById('globalStatus');
+
+      if (!inputVal) {
+        alert("Link tidak boleh kosong! Jika ingin mengosongkan kartu, gunakan tombol Reset.");
         return;
       }
 
-      if (!newUrl.startsWith("http://") && !newUrl.startsWith("https://")) {
-        newUrl = "https://" + newUrl;
+      if (!inputVal.startsWith("http://") && !inputVal.startsWith("https://")) {
+        inputVal = "https://" + inputVal;
+        document.getElementById(`input-${id}`).value = inputVal;
       }
 
       status.style.color = '#38bdf8';
-      status.innerText = "Menyimpan ke cloud...";
+      status.innerText = `Menyimpan perubahan untuk ${id}...`;
 
+      allDatabase[id] = inputVal;
+      await syncDatabase(`Kartu ${id} berhasil diupdate!`, id, true);
+    }
+
+    // 5. Reset Kartu Tertentu (Dikosongkan)
+    async function resetSingleCard(id) {
+      if (!confirm(`Yakin ingin mengosongkan link pada kartu ${id}?`)) return;
+
+      const status = document.getElementById('globalStatus');
+      status.style.color = '#38bdf8';
+      status.innerText = `Mereset kartu ${id}...`;
+
+      delete allDatabase[id];
+      document.getElementById(`input-${id}`).value = "";
+      await syncDatabase(`Kartu ${id} berhasil direset (kosong)!`, id, false);
+    }
+
+    // 6. Sinkronisasi Data ke JSONBin
+    async function syncDatabase(msgText, id, isActive) {
+      const status = document.getElementById('globalStatus');
       try {
-        allCardsData[cardId] = newUrl;
-
         await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
             "X-Master-Key": MASTER_KEY
           },
-          body: JSON.stringify(allCardsData)
+          body: JSON.stringify(allDatabase)
         });
 
         status.style.color = '#10b981';
-        status.innerText = `Kartu ${cardId} berhasil diupdate ke: ${newUrl}`;
-        document.getElementById('cardStatusBadge').className = "badge badge-active";
-        document.getElementById('cardStatusBadge').innerText = "Status: AKTIF (Sudah terisi)";
+        status.innerText = msgText;
+
+        const badge = document.getElementById(`badge-${id}`);
+        badge.className = `badge ${isActive ? 'badge-active' : 'badge-empty'}`;
+        badge.innerText = isActive ? 'AKTIF' : 'KOSONG';
       } catch (e) {
         status.style.color = '#ef4444';
-        status.innerText = "Gagal menyimpan!";
+        status.innerText = "Gagal memperbarui ke database cloud!";
       }
     }
 
-    async function resetCard() {
-      const cardId = document.getElementById('targetId').value.trim().toUpperCase();
-      const status = document.getElementById('statusMsg');
-
-      if (!confirm(`Yakin ingin mengosongkan kartu ${cardId}?`)) return;
-
-      status.style.color = '#38bdf8';
-      status.innerText = "Mereset kartu...";
-
-      try {
-        delete allCardsData[cardId];
-
-        await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            "X-Master-Key": MASTER_KEY
-          },
-          body: JSON.stringify(allCardsData)
-        });
-
-        status.style.color = '#10b981';
-        status.innerText = `Kartu ${cardId} berhasil direset (kosong kembali)!`;
-        document.getElementById('targetUrl').value = "";
-        document.getElementById('cardStatusBadge').className = "badge badge-empty";
-        document.getElementById('cardStatusBadge').innerText = "Status: KOSONG (Belum aktif)";
-      } catch (e) {
-        status.style.color = '#ef4444';
-        status.innerText = "Gagal mereset!";
-      }
-    }
+    // Jalankan pemuatan data saat halaman selesai dibuka
+    window.onload = loadAllData;
   </script>
 </body>
 </html>
