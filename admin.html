@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard Kartu</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #0f172a;
+      color: #f8fafc;
+      margin: 0;
+      padding: 30px 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .panel {
+      background: #1e293b;
+      padding: 24px;
+      border-radius: 16px;
+      width: 100%;
+      max-width: 480px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+      box-sizing: border-box;
+      margin-bottom: 20px;
+    }
+    h2 { margin: 0 0 8px; font-size: 20px; text-align: center; }
+    p.desc { font-size: 13px; color: #94a3b8; margin: 0 0 20px; text-align: center; }
+    label { font-size: 13px; font-weight: 600; color: #cbd5e1; display: block; margin-bottom: 6px; }
+    input[type="text"] {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #334155;
+      border-radius: 10px;
+      background: #0f172a;
+      color: #fff;
+      font-size: 14px;
+      box-sizing: border-box;
+      margin-bottom: 14px;
+      outline: none;
+    }
+    input:focus { border-color: #38bdf8; }
+    .btn-group {
+      display: flex;
+      gap: 10px;
+      margin-top: 6px;
+    }
+    button {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      border-radius: 10px;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 14px;
+      transition: opacity 0.2s;
+    }
+    button:hover { opacity: 0.9; }
+    .btn-search { background: #38bdf8; color: #0f172a; }
+    .btn-save { background: #10b981; color: white; }
+    .btn-delete { background: #ef4444; color: white; }
+    .status { margin-top: 15px; font-size: 13px; text-align: center; font-weight: 600; }
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      margin-bottom: 10px;
+    }
+    .badge-active { background: #065f46; color: #34d399; }
+    .badge-empty { background: #7f1d1d; color: #fca5a5; }
+  </style>
+</head>
+<body>
+
+  <div class="panel">
+    <h2>Pusat Kontrol Kartu</h2>
+    <p class="desc">Kelola, ganti, atau reset link IG untuk semua kartu.</p>
+
+    <label>1. Masukkan Kode Kartu (Contoh: A0001):</label>
+    <div style="display: flex; gap: 8px;">
+      <input type="text" id="targetId" placeholder="A0001" style="text-transform: uppercase;">
+      <button class="btn-search" style="flex: 0 0 90px; height: 44px;" onclick="checkCard()">Cari</button>
+    </div>
+
+    <div id="cardDetails" style="display: none; margin-top: 10px;">
+      <div id="cardStatusBadge"></div>
+
+      <label>2. Link Instagram Tujuan:</label>
+      <input type="text" id="targetUrl" placeholder="https://www.instagram.com/username">
+
+      <div class="btn-group">
+        <button class="btn-save" onclick="saveCard()">Simpan / Update</button>
+        <button class="btn-delete" onclick="resetCard()">Kosongkan (Reset)</button>
+      </div>
+    </div>
+
+    <div class="status" id="statusMsg"></div>
+  </div>
+
+  <script>
+    // ================= MASUKKAN KUNCI JSONBIN DI SINI =================
+    const BIN_ID = "6ac0e112ffd5d1605348ca34";
+    const MASTER_KEY = "$2a$10$waCN6duNqzLWhwNhvvHrEOiwpzTenePD0oVUa2BJffn2/ME6Dz1FG";
+    // ===================================================================
+
+    let allCardsData = {};
+
+    async function checkCard() {
+      const cardId = document.getElementById('targetId').value.trim().toUpperCase();
+      const status = document.getElementById('statusMsg');
+      const details = document.getElementById('cardDetails');
+
+      if (!cardId) {
+        status.style.color = '#ef4444';
+        status.innerText = "Masukkan ID kartu terlebih dahulu!";
+        return;
+      }
+
+      status.style.color = '#38bdf8';
+      status.innerText = "Mengambil data kartu dari cloud...";
+
+      try {
+        const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
+          headers: { "X-Master-Key": MASTER_KEY }
+        });
+        const data = await res.json();
+        allCardsData = data.record || {};
+
+        details.style.display = 'block';
+        status.innerText = "";
+
+        const badge = document.getElementById('cardStatusBadge');
+        const urlInput = document.getElementById('targetUrl');
+
+        if (allCardsData[cardId]) {
+          badge.className = "badge badge-active";
+          badge.innerText = "Status: AKTIF (Sudah terisi)";
+          urlInput.value = allCardsData[cardId];
+        } else {
+          badge.className = "badge badge-empty";
+          badge.innerText = "Status: KOSONG (Belum aktif)";
+          urlInput.value = "";
+        }
+      } catch (e) {
+        status.style.color = '#ef4444';
+        status.innerText = "Gagal terhubung ke database. Cek API Key!";
+      }
+    }
+
+    async function saveCard() {
+      const cardId = document.getElementById('targetId').value.trim().toUpperCase();
+      let newUrl = document.getElementById('targetUrl').value.trim();
+      const status = document.getElementById('statusMsg');
+
+      if (!newUrl) {
+        status.style.color = '#ef4444';
+        status.innerText = "Link Instagram tidak boleh kosong!";
+        return;
+      }
+
+      if (!newUrl.startsWith("http://") && !newUrl.startsWith("https://")) {
+        newUrl = "https://" + newUrl;
+      }
+
+      status.style.color = '#38bdf8';
+      status.innerText = "Menyimpan ke cloud...";
+
+      try {
+        allCardsData[cardId] = newUrl;
+
+        await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Master-Key": MASTER_KEY
+          },
+          body: JSON.stringify(allCardsData)
+        });
+
+        status.style.color = '#10b981';
+        status.innerText = `Kartu ${cardId} berhasil diupdate ke: ${newUrl}`;
+        document.getElementById('cardStatusBadge').className = "badge badge-active";
+        document.getElementById('cardStatusBadge').innerText = "Status: AKTIF (Sudah terisi)";
+      } catch (e) {
+        status.style.color = '#ef4444';
+        status.innerText = "Gagal menyimpan!";
+      }
+    }
+
+    async function resetCard() {
+      const cardId = document.getElementById('targetId').value.trim().toUpperCase();
+      const status = document.getElementById('statusMsg');
+
+      if (!confirm(`Yakin ingin mengosongkan kartu ${cardId}?`)) return;
+
+      status.style.color = '#38bdf8';
+      status.innerText = "Mereset kartu...";
+
+      try {
+        delete allCardsData[cardId];
+
+        await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Master-Key": MASTER_KEY
+          },
+          body: JSON.stringify(allCardsData)
+        });
+
+        status.style.color = '#10b981';
+        status.innerText = `Kartu ${cardId} berhasil direset (kosong kembali)!`;
+        document.getElementById('targetUrl').value = "";
+        document.getElementById('cardStatusBadge').className = "badge badge-empty";
+        document.getElementById('cardStatusBadge').innerText = "Status: KOSONG (Belum aktif)";
+      } catch (e) {
+        status.style.color = '#ef4444';
+        status.innerText = "Gagal mereset!";
+      }
+    }
+  </script>
+</body>
+</html>
