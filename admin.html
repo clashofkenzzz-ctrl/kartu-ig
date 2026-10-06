@@ -254,8 +254,8 @@
 
   <script>
     // ================= MASUKKAN KUNCI JSONBIN DI SINI =================
-    const BIN_ID = "6ac0e112ffd5d1605348ca34";
-    const MASTER_KEY = "$2a$10$waCN6duNqzLWhwNhvvHrEOiwpzTenePD0oVUa2BJffn2/ME6Dz1FG";
+    const BIN_ID = "MASUKKAN_BIN_ID_ANDA_DISINI";
+    const MASTER_KEY = "MASUKKAN_MASTER_KEY_ANDA_DISINI";
     // ===================================================================
 
     let allDatabase = {};
@@ -264,8 +264,198 @@
 
     async function loadAllData() {
       const notif = document.getElementById('globalNotif');
+      
+      // Render kartu terlebih dahulu agar tidak kosong saat menunggu
+      renderDashboard();
+
+      if (BIN_ID.includes("MASUKKAN_") || MASTER_KEY.includes("MASUKKAN_")) {
+        notif.style.color = '#ef4444';
+        notif.innerText = "PERINGATAN: BIN_ID atau MASTER_KEY belum Anda masukkan di kode file admin.html!";
+        return;
+      }
+
       notif.style.color = '#38bdf8';
       notif.innerText = "Mengambil data terbaru dari cloud...";
 
       try {
-        const res = await fetch(`
+        const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
+          headers: { 
+            "X-Master-Key": MASTER_KEY 
+          }
+        });
+        
+        if (!res.ok) {
+          throw new Error(`HTTP Error: ${res.status}`);
+        }
+
+        const data = await res.json();
+        allDatabase = data.record || {};
+
+        // Hitung total aktif
+        let activeTotal = 0;
+        for (const k in allDatabase) {
+          if (allDatabase[k] && allDatabase[k] !== "aktif") activeTotal++;
+        }
+        document.getElementById('activeCount').innerText = activeTotal;
+
+        notif.style.color = '#10b981';
+        notif.innerText = "Data berhasil dimuat. Siap digunakan.";
+        renderDashboard(); // Render ulang dengan status data terbaru
+      } catch (e) {
+        notif.style.color = '#ef4444';
+        notif.innerText = "Gagal koneksi database! Periksa apakah BIN_ID dan MASTER_KEY sudah benar.";
+        console.error(e);
+      }
+    }
+
+    function renderDashboard() {
+      const container = document.getElementById('cardsList');
+      container.innerHTML = "";
+
+      for (let i = 1; i <= currentLimit; i++) {
+        const id = "A" + String(i).padStart(4, '0');
+        renderRow(id, container);
+      }
+
+      customCardsPinned.forEach(customId => {
+        if (!document.getElementById(`row-${customId}`)) {
+          renderRow(customId, container);
+        }
+      });
+    }
+
+    function renderRow(id, container) {
+      const currentUrl = (allDatabase[id] && allDatabase[id] !== "aktif") ? allDatabase[id] : "";
+      const isActive = Boolean(currentUrl);
+
+      const row = document.createElement('div');
+      row.className = 'card-row';
+      row.id = `row-${id}`;
+
+      row.innerHTML = `
+        <div class="card-id-tag">ID: ${id}</div>
+        <div class="status-tag ${isActive ? 'active' : ''}" id="statusTag-${id}">
+          ${isActive ? '● Aktif' : '○ Kosong'}
+        </div>
+        <div class="input-url-box">
+          <input type="text" class="input-url" id="input-${id}" 
+                 value="${currentUrl}" 
+                 placeholder="Belum diaktivasi (kosong)">
+        </div>
+        <div class="actions-box">
+          <button class="btn-action btn-act-save" onclick="saveCard('${id}')">Simpan</button>
+          <button class="btn-action btn-act-reset" onclick="resetCard('${id}')">Reset</button>
+          <button class="btn-action btn-act-open" onclick="openCard('${id}')">Buka</button>
+        </div>
+      `;
+
+      container.appendChild(row);
+    }
+
+    function applyLimit() {
+      const val = parseInt(document.getElementById('limitInput').value, 10);
+      if (isNaN(val) || val < 1) {
+        alert("Masukkan angka yang valid!");
+        return;
+      }
+      currentLimit = val;
+      renderDashboard();
+    }
+
+    function showCustomCard() {
+      let raw = document.getElementById('customInput').value.trim();
+      if (!raw) {
+        alert("Masukkan nomor atau kode kartu!");
+        return;
+      }
+
+      let formattedId = raw.toUpperCase();
+      if (/^\d+$/.test(formattedId)) {
+        formattedId = "A" + String(parseInt(formattedId, 10)).padStart(4, '0');
+      }
+
+      if (!customCardsPinned.includes(formattedId)) {
+        customCardsPinned.unshift(formattedId);
+      }
+
+      renderDashboard();
+
+      const el = document.getElementById(`row-${formattedId}`);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        el.style.borderColor = '#e11d48';
+      }
+    }
+
+    async function saveCard(id) {
+      let val = document.getElementById(`input-${id}`).value.trim();
+      const notif = document.getElementById('globalNotif');
+
+      if (!val) {
+        alert("Tautan tidak boleh kosong! Jika ingin mengosongkan, gunakan tombol Reset.");
+        return;
+      }
+
+      if (!val.startsWith("http://") && !val.startsWith("https://")) {
+        val = "https://" + val;
+        document.getElementById(`input-${id}`).value = val;
+      }
+
+      notif.style.color = '#38bdf8';
+      notif.innerText = `Menyimpan data kartu ${id}...`;
+
+      allDatabase[id] = val;
+      await syncCloud(`Berhasil menyimpan kartu ${id}!`, id, true);
+    }
+
+    async function resetCard(id) {
+      if (!confirm(`Yakin ingin mengosongkan link untuk kartu ${id}?`)) return;
+
+      const notif = document.getElementById('globalNotif');
+      notif.style.color = '#38bdf8';
+      notif.innerText = `Mereset kartu ${id}...`;
+
+      delete allDatabase[id];
+      document.getElementById(`input-${id}`).value = "";
+      await syncCloud(`Kartu ${id} berhasil dikosongkan (reset)!`, id, false);
+    }
+
+    function openCard(id) {
+      const url = `https://kartu-ig.vercel.app/?id=${id}`;
+      window.open(url, '_blank');
+    }
+
+    async function syncCloud(successText, id, isActive) {
+      const notif = document.getElementById('globalNotif');
+      try {
+        await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Master-Key": MASTER_KEY
+          },
+          body: JSON.stringify(allDatabase)
+        });
+
+        const tag = document.getElementById(`statusTag-${id}`);
+        if (tag) {
+          tag.className = `status-tag ${isActive ? 'active' : ''}`;
+          tag.innerText = isActive ? '● Aktif' : '○ Kosong';
+        }
+
+        let activeTotal = 0;
+        for (const k in allDatabase) {
+          if (allDatabase[k] && allDatabase[k] !== "aktif") activeTotal++;
+        }
+        document.getElementById('activeCount').innerText = activeTotal;
+
+        notif.style.color = '#10b981';
+        notif.innerText = successText;
+      } catch (e) {
+        notif.style.color = '#ef4444';
+        notif.innerText = "Gagal memperbarui database cloud!";
+      }
+    }
+
+    window.onload = loadAllData;
+  </script>
