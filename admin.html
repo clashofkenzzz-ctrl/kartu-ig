@@ -157,4 +157,242 @@
     <h2>Manajemen Kartu Smart NFC & QR</h2>
     <p class="desc">Daftar kartu akan otomatis bertambah saat nomor baru dibuat atau diaktifkan.</p>
     
-    <input type="text" id="filterInput
+    <input type="text" id="filterInput" class="search-box" placeholder="Cari nomor ID (misal: A0025) atau username IG..." oninput="filterCards()">
+    
+    <div class="action-bar">
+      <button class="btn-primary" onclick="addNextCard()">+ Tambah Kartu Berikutnya (<span id="nextIdLabel">...</span>)</button>
+      
+      <div class="add-custom">
+        <input type="text" id="customIdInput" class="input-custom" placeholder="ID Bebas (misal: A0050)">
+        <button class="btn-secondary" onclick="addCustomCard()">Tambah</button>
+      </div>
+    </div>
+
+    <div id="globalStatus" class="global-status" style="color: #38bdf8;">Memuat data dari cloud...</div>
+  </div>
+
+  <div class="card-list" id="cardsContainer"></div>
+
+  <script>
+    // ================= MASUKKAN KUNCI JSONBIN DI SINI =================
+    const BIN_ID = "MASUKKAN_BIN_ID_ANDA_DISINI";
+    const MASTER_KEY = "MASUKKAN_MASTER_KEY_ANDA_DISINI";
+    // ===================================================================
+
+    let allDatabase = {};
+    let currentMaxCardNum = 24; // Minimal mulai dari 24
+
+    async function loadAllData() {
+      const status = document.getElementById('globalStatus');
+      try {
+        const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
+          headers: { "X-Master-Key": MASTER_KEY }
+        });
+        const data = await res.json();
+        allDatabase = data.record || {};
+        
+        // Cari angka kartu tertinggi yang sudah tersimpan di database
+        detectMaxNumber();
+
+        status.style.color = '#10b981';
+        status.innerText = "Data berhasil dimuat. Siap digunakan.";
+        renderCards();
+      } catch (e) {
+        status.style.color = '#ef4444';
+        status.innerText = "Gagal koneksi database. Periksa Bin ID dan Master Key!";
+      }
+    }
+
+    // Mendeteksi ID terbesar di database (misal jika ada A0035, batas otomatis jadi 35)
+    function detectMaxNumber() {
+      for (const key of Object.keys(allDatabase)) {
+        if (/^A\d+$/i.test(key)) {
+          const num = parseInt(key.substring(1), 10);
+          if (!isNaN(num) && num > currentMaxCardNum) {
+            currentMaxCardNum = num;
+          }
+        }
+      }
+      updateNextLabel();
+    }
+
+    function updateNextLabel() {
+      const nextNum = currentMaxCardNum + 1;
+      document.getElementById('nextIdLabel').innerText = "A" + String(nextNum).padStart(4, '0');
+    }
+
+    function renderCards() {
+      const container = document.getElementById('cardsContainer');
+      container.innerHTML = "";
+
+      // 1. Render semua kartu berurutan dari 1 sampai nomor terbesar
+      for (let i = 1; i <= currentMaxCardNum; i++) {
+        const id = "A" + String(i).padStart(4, '0');
+        renderSingleItem(id, container);
+      }
+
+      // 2. Render kartu yang memiliki ID custom di luar pola A0001 (jika ada)
+      for (const key of Object.keys(allDatabase)) {
+        if (!document.getElementById(`item-${key}`)) {
+          renderSingleItem(key, container);
+        }
+      }
+
+      filterCards(); // Refresh filter jika sedang mencari
+    }
+
+    function renderSingleItem(id, container) {
+      const currentUrl = allDatabase[id] || "";
+      const isActive = Boolean(currentUrl);
+
+      const cardItem = document.createElement('div');
+      cardItem.className = 'card-item';
+      cardItem.id = `item-${id}`;
+      cardItem.setAttribute('data-id', id);
+
+      cardItem.innerHTML = `
+        <div class="card-badge-col">
+          <span class="card-code">${id}</span>
+          <span class="badge ${isActive ? 'badge-active' : 'badge-empty'}" id="badge-${id}">
+            ${isActive ? 'AKTIF' : 'KOSONG'}
+          </span>
+        </div>
+
+        <div class="card-input-col">
+          <input type="text" class="url-input" id="input-${id}" 
+                 value="${currentUrl}" 
+                 placeholder="Belum ada link profil IG...">
+        </div>
+
+        <div class="card-btn-col">
+          <button class="btn-save" onclick="updateSingleCard('${id}')">Simpan</button>
+          <button class="btn-reset" onclick="resetSingleCard('${id}')">Reset</button>
+        </div>
+      `;
+
+      container.appendChild(cardItem);
+    }
+
+    // Tombol Cepat: Tambah nomor setelahnya (A0025, A0026, dst)
+    function addNextCard() {
+      currentMaxCardNum++;
+      const newId = "A" + String(currentMaxCardNum).padStart(4, '0');
+      const container = document.getElementById('cardsContainer');
+      renderSingleItem(newId, container);
+      updateNextLabel();
+      
+      // Gulir layar ke kartu baru yang baru ditambahkan
+      const newItem = document.getElementById(`item-${newId}`);
+      if (newItem) newItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    // Tambah ID khusus secara manual
+    function addCustomCard() {
+      const input = document.getElementById('customIdInput');
+      const customId = input.value.trim().toUpperCase();
+      
+      if (!customId) {
+        alert("Masukkan ID kartu terlebih dahulu!");
+        return;
+      }
+
+      if (document.getElementById(`item-${customId}`)) {
+        alert(`Kartu dengan ID ${customId} sudah ada di dalam daftar!`);
+        document.getElementById(`item-${customId}`).scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+      }
+
+      // Jika formatnya A+angka dan lebih besar dari max, update counter max
+      if (/^A\d+$/.test(customId)) {
+        const num = parseInt(customId.substring(1), 10);
+        if (num > currentMaxCardNum) {
+          currentMaxCardNum = num;
+          updateNextLabel();
+        }
+      }
+
+      const container = document.getElementById('cardsContainer');
+      renderSingleItem(customId, container);
+      input.value = "";
+      document.getElementById(`item-${customId}`).scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    function filterCards() {
+      const query = document.getElementById('filterInput').value.trim().toLowerCase();
+      const items = document.querySelectorAll('.card-item');
+
+      items.forEach(item => {
+        const id = item.getAttribute('data-id').toLowerCase();
+        const inputVal = item.querySelector('.url-input').value.toLowerCase();
+
+        if (id.includes(query) || inputVal.includes(query)) {
+          item.style.display = 'flex';
+        } else {
+          item.style.display = 'none';
+        }
+      });
+    }
+
+    async function updateSingleCard(id) {
+      let inputVal = document.getElementById(`input-${id}`).value.trim();
+      const status = document.getElementById('globalStatus');
+
+      if (!inputVal) {
+        alert("Link tidak boleh kosong! Jika ingin mengosongkan kartu, gunakan tombol Reset.");
+        return;
+      }
+
+      if (!inputVal.startsWith("http://") && !inputVal.startsWith("https://")) {
+        inputVal = "https://" + inputVal;
+        document.getElementById(`input-${id}`).value = inputVal;
+      }
+
+      status.style.color = '#38bdf8';
+      status.innerText = `Menyimpan perubahan untuk ${id}...`;
+
+      allDatabase[id] = inputVal;
+      await syncDatabase(`Kartu ${id} berhasil diupdate!`, id, true);
+    }
+
+    async function resetSingleCard(id) {
+      if (!confirm(`Yakin ingin mengosongkan link pada kartu ${id}?`)) return;
+
+      const status = document.getElementById('globalStatus');
+      status.style.color = '#38bdf8';
+      status.innerText = `Mereset kartu ${id}...`;
+
+      delete allDatabase[id];
+      document.getElementById(`input-${id}`).value = "";
+      await syncDatabase(`Kartu ${id} berhasil direset (kosong)!`, id, false);
+    }
+
+    async function syncDatabase(msgText, id, isActive) {
+      const status = document.getElementById('globalStatus');
+      try {
+        await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Master-Key": MASTER_KEY
+          },
+          body: JSON.stringify(allDatabase)
+        });
+
+        status.style.color = '#10b981';
+        status.innerText = msgText;
+
+        const badge = document.getElementById(`badge-${id}`);
+        if (badge) {
+          badge.className = `badge ${isActive ? 'badge-active' : 'badge-empty'}`;
+          badge.innerText = isActive ? 'AKTIF' : 'KOSONG';
+        }
+      } catch (e) {
+        status.style.color = '#ef4444';
+        status.innerText = "Gagal memperbarui ke database cloud!";
+      }
+    }
+
+    window.onload = loadAllData;
+  </script>
+</body>
+</html>
